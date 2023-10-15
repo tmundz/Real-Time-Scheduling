@@ -1,14 +1,10 @@
-# Real-Time Scheduling:
+# Preemptive scheduler:
 
-Low Level Practice
+Systems Programming, data structure development and implemintation
 
 ## Scheduling Algorithm:
-Real-time scheduling aims to meet strict timing requirements for tasks. 
-Algorithms like Rate Monotonic Scheduling (RMS) and Earliest Deadline First (EDF) are used. 
-RMS assigns priorities based on task periods, while EDF schedules tasks based on their deadlines.
+Our scheduling algorithm is based on preemption, allowing higher-priority tasks to preempt lower-priority tasks. This approach ensures that critical tasks are executed promptly. Task priorities are subject to dynamic changes, and we employ an AVL tree to maintain an organized order efficiently.
 
 ## Data Structure: 
-Priority queues are commonly used in real-time scheduling to efficiently manage the order of task execution. 
-Priority queues allow tasks with the earliest deadline (in the case of EDF) or the highest priority (in the case of RMS) to be executed first. 
-A concurrent doubly linked list priority queue could be suitable for EDF, as it allows for efficient insertion and removal of tasks with changing deadlines. 
-However, synchronization and concurrent access management are crucial due to the real-time nature of the scheduling.
+My goal is to design a priority queue using a Linked list to help manage the main queue (FIFO), while
+there will be an AVL tree used to update the list as priorities change.
