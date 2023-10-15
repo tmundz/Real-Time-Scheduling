@@ -1,3 +1,6 @@
+mod datastructure;
+use datastructure::linkedlist;
+
 fn main() {
-    println!("Hello, world!");
+    linkedlist::test();
 }
