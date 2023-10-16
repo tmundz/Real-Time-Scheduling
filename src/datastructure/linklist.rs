@@ -1,6 +1,7 @@
 
 use std::rc::{Rc, Weak};
 use std::cell::{RefCell};
+use std::fmt::Debug;
 
 /*
  * Purpose implement a doubly link list
@@ -14,14 +15,17 @@ use std::cell::{RefCell};
  * id to determine a task 
  * rank to determine priority
  * state will need to change to a different struct
- * */
-struct Task {
+*/
+#[derive(Debug)]
+ struct Task {
     id: u32,
     rank: u32,
     state: i32 // will change to a task struct
 }
 
 // struct for the node in linklist
+//
+#[derive(Debug)]
 struct Node {
     node: Rc<RefCell<Task>>,
     next: Option<Rc<RefCell<Node>>>,
@@ -45,6 +49,16 @@ struct LinkList {
     tail: Option<Weak<RefCell<Node>>>,
 }
 
+pub fn testing() {
+   let task = Task{
+       id: 1,
+       rank: 1,
+       state: 0,
+   };
 
+    let node = Node::new(task);
+    let b_n = node.borrow();
+    println!("{:#?}", b_n);
+}
 
 
