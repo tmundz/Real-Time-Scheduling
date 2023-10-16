@@ -55,13 +55,6 @@ impl LinkList {
             tail: None,
         }
     }
-
-    pub fn push(&mut self, task: Task) {
-        
-        let new_node = Node::new(task);
-        // check match self . tail . take()  
-    }
-    
 }
 /*
  * impl functionalities needed
