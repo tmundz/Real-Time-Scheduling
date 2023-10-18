@@ -1,4 +1,5 @@
 
+
 use std::rc::{Rc, Weak};
 use std::cell::{RefCell};
 use std::fmt::Debug;
@@ -56,12 +57,14 @@ impl Node {
 struct LinkList {
     head: Option<Rc<RefCell<Node>>>,
     tail: Option<Weak<RefCell<Node>>>,
+    size: i32,
 }
 impl LinkList {
     pub fn new() -> Self{
         LinkList {
             head: None,
             tail: None,
+            size: 0
         }
     }
 
@@ -77,6 +80,7 @@ impl LinkList {
                 prev_tail.upgrade().unwrap().borrow_mut().next = Some(new_node.clone());                                                                                         //weak 
                 new_node.borrow_mut().prev = Some(prev_tail);
                 self.tail = Some(new_tail);
+                self.size += 1;
             },
             //else there is no tail doubly link list is empty [Head:None] <=> [Tail:None]
             None => {
@@ -86,16 +90,46 @@ impl LinkList {
                 */
                 self.head = Some(new_node.clone()); //make the head be the new_node
                 // make the tail be a weak reference to the same node
-                self.tail = Some(Rc::downgrade(&new_node)); 
+                self.tail = Some(Rc::downgrade(&new_node));
+                self.size += 1;
                
             }
         }
     }
 
-
     //TODO Complete Traversal over doubly linked list forewards an backwards
-    //functions will be traversal and reverse travseral 
+    fn head_traversal(&self) {
+        if self.size == 0 {
+            println!("empty list");
+            return;
+        }
+        let mut cur = self.head.clone();
+
+        while let Some(node) = cur {
+            let cur_node = node.borrow();
+            let task = cur_node.node.borrow();
+            println!("{}", task.id);
+
+            //move to next node
+            cur = cur_node.next.clone();
+        }
+
+    }
+
     
+    fn pop(&mut self) -> Option<Task> {
+        self.head.take().map(|prev_head| {
+            self.head = prev_head.borrow().next.clone();
+            if let Some(ref new_head) = self.head {
+                new_head.borrow_mut().prev = None;
+            }
+            let task = prev_head.borrow().node.borrow().clone();
+
+            self.size -= 1;
+            task
+
+        })
+    }
 }
 /*
  * impl functionalities needed
@@ -105,18 +139,36 @@ impl LinkList {
 */
 
 pub fn testing() {
-    let task = Task{
-        id: 1,
-        rank: 1,
-        state: 0,
-    };
+
+     // Create and add a bunch of tasks
+    let tasks = vec![
+        Task { id: 1, rank: 1, state: 0 },
+        Task { id: 2, rank: 2, state: 0 },
+        Task { id: 3, rank: 3, state: 0 },
+        // Add more tasks as needed
+    ];
     
     let mut ll = LinkList::new();
-    ll.push_back(task.clone());
-    println!("push one\n{:#?}", ll);
-    ll.push_back(task);
-    println!("\n\npush two\n{:#?}", ll);
+    //ll.push_back(task.clone());
+    ll.push_back(tasks[0].clone());
+    ll.push_back(tasks[1].clone());
+    ll.push_back(tasks[2].clone());
+    ll.head_traversal();
+    
+    println!("pop");
+    ll.pop();
+    ll.head_traversal();
 
+    println!("pop");
+    ll.pop();
+    ll.head_traversal();
+    println!("pop");
+    ll.pop();
+    ll.head_traversal();
+    //ll.push_back(task);
+    println!("pop");
+    ll.pop();
+    ll.head_traversal();
 }
 
 
