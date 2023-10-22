@@ -138,37 +138,77 @@ impl LinkList {
  * find/traverse 
 */
 
-pub fn testing() {
+#[cfg(test)]
+mod test {
 
-     // Create and add a bunch of tasks
-    let tasks = vec![
-        Task { id: 1, rank: 1, state: 0 },
-        Task { id: 2, rank: 2, state: 0 },
-        Task { id: 3, rank: 3, state: 0 },
-        // Add more tasks as needed
-    ];
-    
-    let mut ll = LinkList::new();
-    //ll.push_back(task.clone());
-    ll.push_back(tasks[0].clone());
-    ll.push_back(tasks[1].clone());
-    ll.push_back(tasks[2].clone());
-    ll.head_traversal();
-    
-    println!("pop");
-    ll.pop();
-    ll.head_traversal();
+    use super::LinkList;
+    use super::Task;
 
-    println!("pop");
-    ll.pop();
-    ll.head_traversal();
-    println!("pop");
-    ll.pop();
-    ll.head_traversal();
-    //ll.push_back(task);
-    println!("pop");
-    ll.pop();
-    ll.head_traversal();
+    #[test]
+    fn basic_functions() {
+         // Create and add a bunch of tasks
+        let tasks = vec![
+            Task { id: 1, rank: 1, state: 0 },
+            Task { id: 2, rank: 2, state: 0 },
+            Task { id: 3, rank: 3, state: 0 },
+            Task { id: 4, rank: 4, state: 0 },
+            Task { id: 5, rank: 5, state: 0 },
+            // Add more tasks as needed
+        ];
+        
+        let mut ll = LinkList::new();
+        assert_eq!(ll.size, 0);
+        //ll.push_back(task.clone());
+        ll.push_back(tasks[0].clone());
+        ll.push_back(tasks[1].clone());
+        ll.push_back(tasks[2].clone());
+        ll.push_back(tasks[3].clone());
+        ll.push_back(tasks[4].clone());
+        assert_eq!(ll.size, 5);
+    }
+
+    #[test]
+    fn pop_functions() {
+         // Create and add a bunch of tasks
+        let tasks = vec![
+            Task { id: 1, rank: 1, state: 0 },
+            Task { id: 2, rank: 2, state: 0 },
+            Task { id: 3, rank: 3, state: 0 },
+            Task { id: 4, rank: 4, state: 0 },
+            Task { id: 5, rank: 5, state: 0 },
+            // Add more tasks as needed
+        ];
+        
+        let mut ll = LinkList::new();
+        assert_eq!(ll.size, 0);
+        ll.push_back(tasks[0].clone());
+        ll.push_back(tasks[1].clone());
+        ll.push_back(tasks[2].clone());
+        ll.push_back(tasks[3].clone());
+        ll.push_back(tasks[4].clone());
+        assert_eq!(ll.size, 5);
+        assert_eq!(ll.pop().unwrap().id, 1);
+        assert_eq!(ll.pop().unwrap().id, 2);
+        assert_eq!(ll.size, 3);
+        assert_eq!(ll.pop().unwrap().id, 3);
+        assert_eq!(ll.pop().unwrap().id, 4);
+        assert_eq!(ll.size, 1);
+        assert_eq!(ll.pop().unwrap().id, 5);
+        assert_eq!(ll.size, 0);
+    }
+
+    #[test]
+    fn outlier_test() {
+        let mut ll = LinkList::new();
+        match ll.pop() {
+            None => (),
+            Some(_) => panic!("Popped from empty linked list")
+        }
+    }
 }
+
+
+
+
 
 
