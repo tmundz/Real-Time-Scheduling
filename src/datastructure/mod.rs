@@ -1,1 +1,1 @@
-pub mod linkedlist;
+pub mod linklist;

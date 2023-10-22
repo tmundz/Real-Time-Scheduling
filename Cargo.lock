@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "real-time-scheduling"
+name = "preemtive-priority-scheduling"
 version = "0.1.0"
