@@ -1,3 +1,6 @@
+mod datastructure;
+use datastructure::linklist;
+
+
 fn main() {
-    println!("Hello, world!");
 }
