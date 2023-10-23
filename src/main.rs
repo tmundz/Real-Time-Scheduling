@@ -1,6 +1,6 @@
 mod datastructure;
-use datastructure::linkedlist;
+use datastructure::linklist;
+
 
 fn main() {
-    linkedlist::test();
 }
