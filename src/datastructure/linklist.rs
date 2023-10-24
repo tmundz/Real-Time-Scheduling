@@ -1,36 +1,22 @@
-
-
+use super::Task;
 use std::rc::{Rc, Weak};
 use std::cell::{RefCell};
 use std::fmt::Debug;
 
-/*
- *
- * [None] <=> [Node1:Task1] <=> [Node2:Task2] <=> [...] [NodeN:taskN]<=> [None]
- *         ^                                                          ^
- *         |                                                          |
- *       Head                                                        Tail
- * Tail is a reference to NodeN and the next aka None
- * Head is a reference to Node1 and the previous aka None
- * Purpose implement a doubly link list
- * that will help manage tasks
- * */
+/// [None] <=> [Node1:Task1] <=> [Node2:Task2] <=> [...] [NodeN:taskN]<=> [None]
+///         ^                                                          ^
+///         |                                                          |
+///       Head                                                        Tail
+/// Tail is a reference to NodeN and the next aka None
+/// Head is a reference to Node1 and the previous aka None
+/// Purpose implement a doubly link list
+/// that will help manage tasks
+///
 
 
 
 
-/*
- * id to determine a task 
- * rank to determine priority
-    ll.push_back(task);
- * state will need to change to a different struct
-*/
-#[derive(Debug, Clone)]
- struct Task {
-    id: u32,
-    rank: u32,
-    state: i32 // will change to a task struct
-}
+
 
 // struct for the node in linklist
 //
@@ -97,22 +83,26 @@ impl LinkList {
         }
     }
 
+    fn is_empty(&self) -> bool {
+        self.size == 0
+    }
     //TODO Complete Traversal over doubly linked list forewards an backwards
-    fn head_traversal(&self) {
-        if self.size == 0 {
+    fn search_by_id(&self, value:u32) -> Option<Rc<RefCell<Node>>> {
+        if self.is_empty() {
             println!("empty list");
-            return;
+            return None;
         }
         let mut cur = self.head.clone();
-
         while let Some(node) = cur {
             let cur_node = node.borrow();
             let task = cur_node.node.borrow();
-            println!("{}", task.id);
-
+            if value == task.id {
+                return Some(Rc::clone(&node));
+            }
             //move to next node
             cur = cur_node.next.clone();
         }
+        None
 
     }
 
