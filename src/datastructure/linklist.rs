@@ -86,7 +86,8 @@ impl LinkList {
     fn is_empty(&self) -> bool {
         self.size == 0
     }
-    //TODO Complete Traversal over doubly linked list forewards an backwards
+
+    //searches task by id
     fn search_by_id(&self, value:u32) -> Option<Rc<RefCell<Node>>> {
         if self.is_empty() {
             println!("empty list");
@@ -131,6 +132,7 @@ impl LinkList {
 #[cfg(test)]
 mod test {
 
+
     use super::LinkList;
     use super::Task;
 
@@ -155,6 +157,72 @@ mod test {
         ll.push_back(tasks[3].clone());
         ll.push_back(tasks[4].clone());
         assert_eq!(ll.size, 5);
+    }
+
+    #[test]
+    fn empty_functions() {
+         // Create and add a bunch of tasks
+        let tasks = vec![
+            Task { id: 1, rank: 1, state: 0 },
+            Task { id: 2, rank: 2, state: 0 },
+            Task { id: 3, rank: 3, state: 0 },
+            Task { id: 4, rank: 4, state: 0 },
+            Task { id: 5, rank: 5, state: 0 },
+            // Add more tasks as needed
+        ];
+        
+        let mut ll = LinkList::new();
+        assert!(ll.is_empty());
+        //ll.push_back(task.clone());
+        ll.push_back(tasks[0].clone());
+        assert!(!ll.is_empty());
+        ll.push_back(tasks[1].clone());
+        ll.push_back(tasks[2].clone());
+        ll.push_back(tasks[3].clone());
+        ll.push_back(tasks[4].clone());
+        assert!(!ll.is_empty());
+        assert_eq!(ll.size, 5);
+    }
+    #[test]
+    fn find_functions() {
+         // Create and add a bunch of tasks
+        let tasks = vec![
+            Task { id: 1, rank: 1, state: 0 },
+            Task { id: 2, rank: 2, state: 0 },
+            Task { id: 3, rank: 3, state: 0 },
+            Task { id: 4, rank: 4, state: 0 },
+            Task { id: 5, rank: 5, state: 0 },
+            // Add more tasks as needed
+        ];
+        
+        let mut ll = LinkList::new();
+        let id = match ll.search_by_id(0) {
+            Some(id) => id.borrow().node.borrow().id,
+            None => u32::MAX,
+        };
+        assert_eq!(id, u32::MAX);
+        //ll.push_back(task.clone());
+        ll.push_back(tasks[0].clone());
+        ll.push_back(tasks[1].clone());
+        ll.push_back(tasks[2].clone());
+        let midid = match ll.search_by_id(3) {
+            Some(midid) => midid.borrow().node.borrow().id,
+            None => u32::MAX,
+        };
+        assert_eq!(midid, 3);
+        ll.push_back(tasks[3].clone());
+        ll.push_back(tasks[4].clone());
+        let id1 = match ll.search_by_id(1) {
+            Some(id1) => id1.borrow().node.borrow().id,
+            None => u32::MAX,
+        };
+        assert_eq!(id1, 1);
+
+        let id2 = match ll.search_by_id(100) {
+            Some(id2) => id2.borrow().node.borrow().id,
+            None => u32::MAX,
+        };
+        assert_eq!(id2, u32::MAX);
     }
 
     #[test]
