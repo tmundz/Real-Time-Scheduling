@@ -15,14 +15,16 @@ The foundation of the scheduler's task queue is a doubly linked list. Using this
 - [x] Insert
 - [x] Delete
 - [x] Traversing
+- [x] Is Empty
+- [x] Find Task
 
 ### Concurrent AVL Tree
 
-The concurrent AVL tree plays a central role in managing tasks within the scheduler. As a self-balancing data structure, it ensures that the heights and depths of each subtree remain balanced, facilitating efficient task management. Notable functionalities include:
+The concurrent AVL tree plays a central role in managing tasks within the scheduler. As a self-balancing data structure, it ensures that the heights and depths of each subtree remain balanced, facilitating efficient task management. Notable functionalities include
 
 - [ ] Insert
 - [ ] Delete
-- [ ] Get Highest Priority
+- [ ] Get Highest Priority 
 - [ ] Update Priority
 - [ ] Find Task
 - [ ] Traverse
