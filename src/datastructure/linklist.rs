@@ -20,8 +20,8 @@ use std::fmt::Debug;
 
 // struct for the node in linklist
 //
-#[derive(Debug)]
-struct Node {
+#[derive(Debug, Clone)]
+pub struct Node {
     node: Rc<RefCell<Task>>,
     next: Option<Rc<RefCell<Node>>>,
     prev: Option<Weak<RefCell<Node>>>,
@@ -39,8 +39,8 @@ impl Node {
 }
 
 // the structure of a doubly linked list
-#[derive(Debug)]
-struct LinkList {
+#[derive(Debug, Clone)]
+pub struct LinkList {
     head: Option<Rc<RefCell<Node>>>,
     tail: Option<Weak<RefCell<Node>>>,
     size: i32,
@@ -83,11 +83,11 @@ impl LinkList {
         }
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.size == 0
     }
     //TODO Complete Traversal over doubly linked list forewards an backwards
-    fn search_by_id(&self, value:u32) -> Option<Rc<RefCell<Node>>> {
+    pub fn search_by_node(&self, value:Rc<RefCell<Task>>) -> Option<Rc<RefCell<Node>>> {
         if self.is_empty() {
             println!("empty list");
             return None;
@@ -96,7 +96,7 @@ impl LinkList {
         while let Some(node) = cur {
             let cur_node = node.borrow();
             let task = cur_node.node.borrow();
-            if value == task.id {
+            if value.borrow().id == task.id {
                 return Some(Rc::clone(&node));
             }
             //move to next node
@@ -107,7 +107,7 @@ impl LinkList {
     }
 
     
-    fn pop(&mut self) -> Option<Task> {
+    pub fn pop(&mut self) -> Option<Task> {
         self.head.take().map(|prev_head| {
             self.head = prev_head.borrow().next.clone();
             if let Some(ref new_head) = self.head {
@@ -120,12 +120,24 @@ impl LinkList {
 
         })
     }
+
+    pub fn get_head(&self) -> Option<Rc<RefCell<Task>>> {
+        Some(self.head.clone().unwrap().borrow().node.clone())
+    }
+
+    pub fn display(&self, indent: &str) {
+        let mut cur = self.head.clone();
+        while let Some(node) = cur {
+            let cur_node = node.borrow();
+            let task = cur_node.node.borrow();
+            println!("{}Task: id={}, rank={}, state={}, size={}", indent, task.id, task.rank, task.state, self.size);
+            cur = cur_node.next.clone();
+        }
+    }
+
 }
 /*
- * impl functionalities needed
- * insert
- * pop
- * find/traverse 
+ * may be useful to have a push front push back
 */
 
 #[cfg(test)]

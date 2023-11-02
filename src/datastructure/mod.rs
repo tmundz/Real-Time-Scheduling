@@ -9,7 +9,7 @@ pub mod avl;
 */
 #[derive(Debug, Clone, PartialEq)]
 pub struct Task {
-    id: u32,
-    rank: u32,
+    id: i32,
+    rank: i32,
     state: i32 // will change to a task struct
 }
