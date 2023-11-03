@@ -110,6 +110,14 @@ impl AvlTree {
         //update balance
     }
 
+    //update height function
+    fn update_height(&mut self) {
+        let left_height = self.left.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
+        let right_height = self.right.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
+
+        self.height = 1 + std::cmp::max(left_height, right_height);
+    }
+
     fn display(&self, indent: String) {
         match &self.val {
             Some(TaskorLink::STask(task)) => {
@@ -180,12 +188,12 @@ pub fn testing() {
     //println!("{:#?}",avl);
 }
 
-/*#[cfg(test)]
+#[cfg(test)]
 mod test {
-    use super::avl;
+    use super::AvlTree;
     use super::Task;
     fn insert_test() {
         
         println!("hello");
     }
-}*/
+}
