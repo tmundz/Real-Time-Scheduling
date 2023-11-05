@@ -29,15 +29,27 @@ pub struct AvlTree {
 impl AvlTree {
     fn new(task: Task) -> Self {
         AvlTree {
-            val: Some(TaskorLink::STask(task)), 
+            val: None,
             height: 1,
             left: None,
             right: None,
         }
     }
 
-    // recursive insert 
+    // checks if the tree is empty
+    pub fn is_empty(&self) -> bool {
+        self.val.is_none()
+    }
+
     pub fn insert(&mut self, new_val: Task) {
+        if self.is_empty() {
+            self.val = Some(TaskorLink::STask(new_val));
+        } else {
+            self.r_insert(new_val);
+        }
+    }
+    // recursive insert 
+    fn r_insert(&mut self, new_val: Task) {
         match &mut self.val {
             //check if there is a task value
             Some(TaskorLink::STask(cur_task)) => {
