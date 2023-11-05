@@ -118,8 +118,8 @@ impl AvlTree {
                 self.height = 1;
             }
         }
-        //update height 
-        //update balance
+        self.update_height();
+        self.balance();
     }
 
     //update height function
@@ -128,6 +128,21 @@ impl AvlTree {
         let right_height = self.right.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
 
         self.height = 1 + std::cmp::max(left_height, right_height);
+    }
+
+    // balance the tree after inserting 
+    fn balance(&mut self) {
+        //LL 
+        //left tree higher then the right subtee right_rotation
+        //LR 
+        //left tree is lower then the right tree left rotation on left child
+        //right rotation on cur leaf node
+        //RL
+        //right tree higher then the left subtee left_rotation
+        //RR
+        //right tree is lower then the left tree right rotation on right child
+        //left rotation on cur leaf node
+
     }
 
     fn display(&self, indent: String) {
