@@ -1,8 +1,8 @@
-use super::Task;
 use super::linklist;
 use super::linklist::*;
-use std::sync::{Arc, Mutex};
+use super::Task;
 use std::cmp::Ordering;
+use std::sync::{Arc, Mutex};
 
 // An AVL tree is a self-balancing binary search tree. It ensures that the height
 // difference between the left and right subtrees of any node (the balance factor)
@@ -48,7 +48,7 @@ impl AvlTree {
             self.r_insert(new_val);
         }
     }
-    // recursive insert 
+    // recursive insert
     fn r_insert(&mut self, new_val: Task) {
         match &mut self.val {
             //check if there is a task value
@@ -56,18 +56,17 @@ impl AvlTree {
                 //base case for single tasks in a leaf
                 //if ranks don't match insert into a left or right leaf
                 match cur_task.rank.cmp(&new_val.rank) {
-                    Ordering::Equal =>  {
+                    Ordering::Equal => {
                         let mut ll = linklist::LinkList::new();
                         ll.push_back(cur_task.clone());
                         ll.push_back(new_val);
                         self.val = Some(TaskorLink::Link(ll));
-
                     }
                     Ordering::Greater => {
                         if let Some(right) = &mut self.right {
                             let mut right_leaf = right.lock().unwrap();
                             right_leaf.insert(new_val);
-                        }else {
+                        } else {
                             let new_node = AvlTree::new(new_val);
                             self.right = Some(Arc::new(Mutex::new(new_node)));
                         }
@@ -83,7 +82,7 @@ impl AvlTree {
                     }
                 }
             }
-            
+
             // if leaf node already contains a Doubly
             // linklist check and push to back
             // else insert into a right or left node
@@ -94,7 +93,6 @@ impl AvlTree {
                         ll.push_back(new_val);
                     }
                     Ordering::Greater => {
-
                         if let Some(right) = &mut self.right {
                             let mut right_leaf = right.lock().unwrap();
                             right_leaf.insert(new_val);
@@ -102,11 +100,10 @@ impl AvlTree {
                     }
 
                     Ordering::Less => {
-                        
                         if let Some(left) = &mut self.left {
                             let mut left_leaf = left.lock().unwrap();
                             left_leaf.insert(new_val);
-                        } 
+                        }
                     }
                 }
             }
@@ -120,29 +117,45 @@ impl AvlTree {
         }
         self.balance();
     }
-   
+
     //blance factor function is the difference between the height
     fn balance_factor(&self) -> i32 {
-        let left_height = self.left.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
-        let right_height = self.right.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
+        let left_height = self
+            .left
+            .as_ref()
+            .map(|node| node.lock().unwrap().height)
+            .unwrap_or(0);
+        let right_height = self
+            .right
+            .as_ref()
+            .map(|node| node.lock().unwrap().height)
+            .unwrap_or(0);
         left_height - right_height
     }
 
     //update height function
     fn update_height(&mut self) {
-        let left_height = self.left.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
-        let right_height = self.right.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
+        let left_height = self
+            .left
+            .as_ref()
+            .map(|node| node.lock().unwrap().height)
+            .unwrap_or(0);
+        let right_height = self
+            .right
+            .as_ref()
+            .map(|node| node.lock().unwrap().height)
+            .unwrap_or(0);
 
         self.height = 1 + std::cmp::max(left_height, right_height);
     }
 
     // left rotation left imbalance
     /*          root -> right-> right      root-> right -> left
-     *           5         4                   6            4
+     *           6         7                   6            8
      *             \      / \                    \        /  \
-     *              4 ->  5   3                   4  ->  6    5
+     *              7 -> 6   8                   8  ->  6    7
      *               \                           /
-     *                3                         5
+     *                8                         7
      *
      * */
     fn left_rotation(&mut self) {
@@ -155,36 +168,31 @@ impl AvlTree {
                 // left child val
                 let new_root_data = new_root.lock().unwrap().val.clone();
 
-                let new_left = AvlTree{
+                let new_left = AvlTree {
                     val: self.val.clone(),
                     height: self.height,
                     left: self.left.take(),
                     right: None,
-
-
                 };
 
                 self.val = new_root_data;
                 self.left = Some(Arc::new(Mutex::new(new_left)));
                 self.right = new_root.lock().unwrap().left.clone();
 
-
                 // root -> right -> right
             } else {
                 let new_root_data = new_root.lock().unwrap().val.clone();
 
-                let new_right = AvlTree{
+                let new_left = AvlTree {
                     val: self.val.clone(),
                     height: self.height,
-                    left: None,
-                    right: self.right.take(),
-
-
+                    left: self.left.take(),
+                    right: None,
                 };
 
                 self.val = new_root_data;
-                self.left = new_root.lock().unwrap().left.clone();
-                self.right = Some(Arc::new(Mutex::new(new_right)));
+                self.left = Some(Arc::new(Mutex::new(new_left)));
+                self.right = new_root.lock().unwrap().right.clone();
             }
         }
         // update height
@@ -201,7 +209,7 @@ impl AvlTree {
      *
      * */
     fn right_rotation(&mut self) {
-        //root -> left 
+        //root -> left
         if let Some(mut new_root) = self.left.take() {
             // root-> left -> right
             if let Some(new_left) = new_root.lock().unwrap().right.take() {
@@ -210,31 +218,26 @@ impl AvlTree {
                 // left child val
                 let new_root_data = new_root.lock().unwrap().val.clone();
 
-                let new_right = AvlTree{
+                let new_right = AvlTree {
                     val: self.val.clone(),
                     height: self.height,
                     left: None,
                     right: self.right.take(),
-
-
                 };
 
                 self.val = new_root_data;
                 self.left = new_root.lock().unwrap().left.clone();
                 self.right = Some(Arc::new(Mutex::new(new_right)));
 
-
             // root -> left -> left
             } else {
                 let new_root_data = new_root.lock().unwrap().val.clone();
 
-                let new_right = AvlTree{
+                let new_right = AvlTree {
                     val: self.val.clone(),
                     height: self.height,
                     left: None,
                     right: self.right.take(),
-
-
                 };
 
                 self.val = new_root_data;
@@ -245,14 +248,13 @@ impl AvlTree {
         // update height
         self.update_height();
     }
-    
 
     // balance the tree after inserting
     fn balance(&mut self) {
         self.update_height();
-        //LL 
+        //LL
         //left tree higher then the right subtee right_rotation
-        //LR 
+        //LR
         //left tree is lower then the right tree left rotation on left child
         //right rotation on cur leaf node
         //RL
@@ -260,13 +262,15 @@ impl AvlTree {
         //RR
         //right tree is lower then the left tree right rotation on right child
         //left rotation on cur leaf node
-
     }
 
     fn display(&self, indent: String) {
         match &self.val {
             Some(TaskorLink::STask(task)) => {
-                println!("{}Task: id={}, rank={}, state={}", indent, task.id, task.rank, task.state);
+                println!(
+                    "{}Task: id={}, rank={}, state={}",
+                    indent, task.id, task.rank, task.state
+                );
             }
             Some(TaskorLink::Link(link_list)) => {
                 println!("{}Linked List:", indent);
@@ -285,35 +289,93 @@ impl AvlTree {
             right.lock().unwrap().display(format!("{}R: ", indent));
         }
     }
-            //fn update
+    //fn update
     //balance
     //Delete
     //traverse
     //update priority
     //concurrency
     //look into preemption
-
 }
 
 pub fn testing() {
-    
     let tasks = vec![
-        Task { id: 1, rank: 1, state: 0 },
-        Task { id: 2, rank: 2, state: 0 },
-        Task { id: 3, rank: 3, state: 0 },
-        Task { id: 8, rank: 4, state: 0 },
-        Task { id: 7, rank: 4, state: 0 },
-        Task { id: 6, rank: 4, state: 0 },
-        Task { id: 4, rank: 3, state: 0 },
-        Task { id: 5, rank: 5, state: 0 },
-        Task { id: 7, rank: 0, state: 0 },
-        Task { id: 10, rank: 5, state: 0 },
-        Task { id: 9, rank: 1, state: 0 },
-        Task { id: 11, rank: 2, state: 0 },
-        Task { id: 12, rank: 6, state: 0 },
-        Task { id: 13, rank: 10, state: 0 },
-        Task { id: 14, rank: 10, state: 0 },
-    ]; 
+        Task {
+            id: 1,
+            rank: 1,
+            state: 0,
+        },
+        Task {
+            id: 2,
+            rank: 2,
+            state: 0,
+        },
+        Task {
+            id: 3,
+            rank: 3,
+            state: 0,
+        },
+        Task {
+            id: 8,
+            rank: 4,
+            state: 0,
+        },
+        Task {
+            id: 7,
+            rank: 4,
+            state: 0,
+        },
+        Task {
+            id: 6,
+            rank: 4,
+            state: 0,
+        },
+        Task {
+            id: 4,
+            rank: 3,
+            state: 0,
+        },
+        Task {
+            id: 5,
+            rank: 5,
+            state: 0,
+        },
+        Task {
+            id: 7,
+            rank: 0,
+            state: 0,
+        },
+        Task {
+            id: 10,
+            rank: 5,
+            state: 0,
+        },
+        Task {
+            id: 9,
+            rank: 1,
+            state: 0,
+        },
+        Task {
+            id: 11,
+            rank: 2,
+            state: 0,
+        },
+        Task {
+            id: 12,
+            rank: 6,
+            state: 0,
+        },
+        Task {
+            id: 13,
+            rank: 10,
+            state: 0,
+        },
+        Task {
+            id: 14,
+            rank: 10,
+            state: 0,
+        },
+    ];
     let mut avl = AvlTree::new(tasks[2].clone());
     avl.insert(tasks[1].clone());
     avl.insert(tasks[9].clone());
@@ -329,7 +391,7 @@ pub fn testing() {
     avl.insert(tasks[5].clone());
     avl.insert(tasks[6].clone());
 
-    avl.display(' '.to_string()); 
+    avl.display(' '.to_string());
     //println!("{:#?}",avl);
 }
 
@@ -338,7 +400,6 @@ mod test {
     use super::AvlTree;
     use super::Task;
     fn insert_test() {
-        
         println!("hello");
     }
 }
