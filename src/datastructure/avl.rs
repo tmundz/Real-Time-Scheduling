@@ -118,8 +118,14 @@ impl AvlTree {
                 self.height = 1;
             }
         }
-        self.update_height();
         self.balance();
+    }
+   
+    //blance factor function is the difference between the height
+    fn balance_factor(&self) -> i32 {
+        let left_height = self.left.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
+        let right_height = self.right.as_ref().map(|node| node.lock().unwrap().height).unwrap_or(0);
+        left_height - right_height
     }
 
     //update height function
@@ -129,9 +135,70 @@ impl AvlTree {
 
         self.height = 1 + std::cmp::max(left_height, right_height);
     }
+  
 
+    // right rotation left imbalance
+    /*          root -> left-> left      root-> left -> Right
+     *           5     4                6         4
+     *          /     / \              /        /  \
+     *         4 ->  3   5            4    ->  5    6
+     *        /                        \
+     *      3                           5
+     *
+     * */
+    fn right_rotation(&mut self) {
+        //root -> left 
+        if let Some(mut new_root) = self.left.take() {
+            // root-> left -> right
+            if let Some(new_left) = new_root.lock().unwrap().right.take() {
+                // right grandchild val
+                let new_left_data = new_left.lock().unwrap().val.clone();
+                // left child val
+                let new_root_data = new_root.lock().unwrap().val.clone();
+
+                let new_right = AvlTree{
+                    val: self.val.clone(),
+                    height: self.height,
+                    left: None,
+                    right: self.right.take(),
+
+
+                };
+
+                self.val = new_root_data;
+                self.left = new_root.lock().unwrap().left.clone();
+                self.right = Some(Arc::new(Mutex::new(new_right)));
+
+
+            // root -> left -> left
+            } else {
+                let new_root_data = new_root.lock().unwrap().val.clone();
+
+                let new_right = AvlTree{
+                    val: self.val.clone(),
+                    height: self.height,
+                    left: None,
+                    right: self.right.take(),
+
+
+                };
+
+                self.val = new_root_data;
+                self.left = new_root.lock().unwrap().left.clone();
+                self.right = Some(Arc::new(Mutex::new(new_right)));
+            }
+        }
+        // update height
+        self.update_height();
+    }
+    
+
+    fn left_rotation(&mut self) {
+
+    }
     // balance the tree after inserting 
     fn balance(&mut self) {
+        self.update_height();
         //LL 
         //left tree higher then the right subtee right_rotation
         //LR 
