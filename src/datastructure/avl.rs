@@ -135,7 +135,61 @@ impl AvlTree {
 
         self.height = 1 + std::cmp::max(left_height, right_height);
     }
-  
+
+    // left rotation left imbalance
+    /*          root -> right-> right      root-> right -> left
+     *           5         4                   6            4
+     *             \      / \                    \        /  \
+     *              4 ->  5   3                   4  ->  6    5
+     *               \                           /
+     *                3                         5
+     *
+     * */
+    fn left_rotation(&mut self) {
+        //root -> right
+        if let Some(mut new_root) = self.right.take() {
+            // root-> right -> left
+            if let Some(new_right) = new_root.lock().unwrap().left.take() {
+                // right grandchild val
+                let new_right_data = new_right.lock().unwrap().val.clone();
+                // left child val
+                let new_root_data = new_root.lock().unwrap().val.clone();
+
+                let new_left = AvlTree{
+                    val: self.val.clone(),
+                    height: self.height,
+                    left: self.left.take(),
+                    right: None,
+
+
+                };
+
+                self.val = new_root_data;
+                self.left = Some(Arc::new(Mutex::new(new_left)));
+                self.right = new_root.lock().unwrap().left.clone();
+
+
+                // root -> right -> right
+            } else {
+                let new_root_data = new_root.lock().unwrap().val.clone();
+
+                let new_right = AvlTree{
+                    val: self.val.clone(),
+                    height: self.height,
+                    left: None,
+                    right: self.right.take(),
+
+
+                };
+
+                self.val = new_root_data;
+                self.left = new_root.lock().unwrap().left.clone();
+                self.right = Some(Arc::new(Mutex::new(new_right)));
+            }
+        }
+        // update height
+        self.update_height();
+    }
 
     // right rotation left imbalance
     /*          root -> left-> left      root-> left -> Right
@@ -193,10 +247,7 @@ impl AvlTree {
     }
     
 
-    fn left_rotation(&mut self) {
-
-    }
-    // balance the tree after inserting 
+    // balance the tree after inserting
     fn balance(&mut self) {
         self.update_height();
         //LL 
