@@ -1,8 +1,8 @@
-pub mod linklist;
 pub mod avl;
+pub mod linklist;
 
 /*
- * id to determine a task 
+ * id to determine a task
  * rank to determine priority
     ll.push_back(task);
  * state will need to change to a different struct
@@ -11,5 +11,11 @@ pub mod avl;
 pub struct Task {
     id: i32,
     rank: i32,
-    state: i32 // will change to a task struct
+    state: i32, // will change to a task struct
+}
+
+impl Task {
+    fn new(id: i32, rank: i32, state: i32) -> Task {
+        Task { id, rank, state }
+    }
 }
