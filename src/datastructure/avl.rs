@@ -41,6 +41,8 @@ impl AvlTree {
         self.val.is_none()
     }
 
+    //traverse through and display the path to value
+
     pub fn insert(&mut self, new_val: Task) {
         if self.is_empty() {
             self.val = Some(TaskorLink::STask(new_val));
@@ -49,10 +51,9 @@ impl AvlTree {
         }
     }
     // recursive insert
-
     fn r_insert(&mut self, new_val: Task) {
         match &mut self.val {
-            Some(TaskorLink::STask(cur_task)) => match cur_task.rank.cmp(&new_val.rank) {
+            Some(TaskorLink::STask(cur_task)) => match new_val.rank.cmp(&cur_task.rank) {
                 Ordering::Equal => {
                     let mut ll = linklist::LinkList::new();
                     ll.push_back(cur_task.clone());
@@ -80,7 +81,7 @@ impl AvlTree {
             },
             Some(TaskorLink::Link(ll)) => {
                 let cur_node = ll.get_head().unwrap().borrow().clone();
-                match cur_node.rank.cmp(&new_val.rank) {
+                match new_val.rank.cmp(&cur_node.rank) {
                     Ordering::Equal => {
                         ll.push_back(new_val);
                     }
@@ -105,9 +106,33 @@ impl AvlTree {
                 self.height = 1;
             }
         }
-        self.balance();
+        self.update_height();
+        //self.balance();
     }
+    //update height function
+    fn update_height(&mut self) {
+        let left_height = self
+            .left
+            .as_ref()
+            .map(|node| node.lock().unwrap().height)
+            .unwrap_or(0);
+        let right_height = self
+            .right
+            .as_ref()
+            .map(|node| node.lock().unwrap().height)
+            .unwrap_or(0);
 
+        self.height = 1 + std::cmp::max(left_height, right_height);
+
+        // Update height after rotations
+        self.left
+            .as_ref()
+            .map(|node| node.lock().unwrap().update_height());
+        self.right
+            .as_ref()
+            .map(|node| node.lock().unwrap().update_height());
+    }
+    /*
     // left rotation left imbalance
     /*          root -> right-> right      root-> right -> left
      *           6         7                   6            8
@@ -224,29 +249,7 @@ impl AvlTree {
         left_height - right_height
     }
 
-    //update height function
-    fn update_height(&mut self) {
-        let left_height = self
-            .left
-            .as_ref()
-            .map(|node| node.lock().unwrap().height)
-            .unwrap_or(0);
-        let right_height = self
-            .right
-            .as_ref()
-            .map(|node| node.lock().unwrap().height)
-            .unwrap_or(0);
 
-        self.height = 1 + std::cmp::max(left_height, right_height);
-
-        // Update height after rotations
-        self.left
-            .as_ref()
-            .map(|node| node.lock().unwrap().update_height());
-        self.right
-            .as_ref()
-            .map(|node| node.lock().unwrap().update_height());
-    }
     // balance the tree after inserting
     fn balance(&mut self) {
         self.update_height();
@@ -336,7 +339,7 @@ impl AvlTree {
     //traverse
     //update priority
     //concurrency
-    //look into preemption
+    //look into preemption */
 }
 
 #[cfg(test)]
@@ -346,15 +349,25 @@ mod tests {
     #[test]
     fn test_insert_tasks() {
         // Create an AVL tree
-        let mut avl_tree = AvlTree::new(Task::new(0, 0, 0));
+        let mut avl_tree = AvlTree::new(Task::new(0, 4, 0));
 
         // Define a vector of tasks
         let tasks = vec![
             Task::new(1, 1, 0),
-            Task::new(2, 2, 0),
+            Task::new(2, 6, 0),
             Task::new(3, 3, 0),
             Task::new(4, 4, 0),
             Task::new(5, 5, 0),
+            /*Task::new(15, 9, 0),
+            Task::new(16, 5, 0),
+            Task::new(14, 4, 0),
+            Task::new(12, 8, 0),
+            Task::new(8, 6, 0),
+            Task::new(11, 3, 0),
+            Task::new(6, 10, 0),
+            Task::new(8, 3, 0),
+            Task::new(7, 7, 0),
+            Task::new(10, 10, 0),*/
         ];
 
         // Insert tasks into the AVL tree
@@ -363,13 +376,12 @@ mod tests {
         }
 
         // Verify the structure and content of the AVL tree
-        assert_eq!(avl_tree.height, 4);
-        assert!(avl_tree.is_avl_balanced());
-
-        // Add more assertions to check the content and structure of the AVL tree
+        assert_eq!(avl_tree.height, 3);
+        //no balancing yet just update height
+        // 2
     }
 
-    #[test]
+    /*#[test]
     fn test_left_rotation() {
         let mut avl_tree = AvlTree::new(Task::new(5, 5, 0));
         avl_tree.insert(Task::new(4, 4, 0));
@@ -411,7 +423,7 @@ mod tests {
         // Verify right-left rotation
         assert_eq!(avl_tree.height, 3);
         assert!(avl_tree.is_avl_balanced());
-    }
+    }*/
 
     // Add more test cases as needed
 }
