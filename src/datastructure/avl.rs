@@ -41,8 +41,45 @@ impl AvlTree {
         self.val.is_none()
     }
 
-    //traverse through and display the path to value
+    pub fn search_by_rank(&self, t_rank: i32) -> Option<AvlTree> {
+        match &self.val {
+            //base case if there is a single value
+            Some(TaskorLink::STask(cur_task)) => {
+                if t_rank == cur_task.rank {
+                    return Some(self.clone());
+                } else if t_rank < cur_task.rank {
+                    if let Some(left) = &self.left {
+                        return left.lock().unwrap().search_by_rank(t_rank);
+                    }
+                } else if t_rank > cur_task.rank {
+                    if let Some(right) = &self.right {
+                        return right.lock().unwrap().search_by_rank(t_rank);
+                    }
+                }
+            }
+            Some(TaskorLink::Link(ll)) => {
+                let cur = ll.get_head().unwrap().borrow().clone();
+                let cur_rank = cur.rank;
+                if t_rank == cur_rank {
+                    return Some(self.clone());
+                } else if t_rank < cur_rank {
+                    if let Some(left) = &self.left {
+                        return left.lock().unwrap().search_by_rank(t_rank);
+                    }
+                } else if t_rank > cur_rank {
+                    if let Some(right) = &self.right {
+                        return right.lock().unwrap().search_by_rank(t_rank);
+                    }
+                }
+            }
+            None => {
+                return None;
+            }
+        }
+        None
+    }
 
+    //traverse through and display the path to value
     pub fn insert(&mut self, new_val: Task) {
         if self.is_empty() {
             self.val = Some(TaskorLink::STask(new_val));
@@ -358,16 +395,7 @@ mod tests {
             Task::new(3, 3, 0),
             Task::new(4, 4, 0),
             Task::new(5, 5, 0),
-            /*Task::new(15, 9, 0),
-            Task::new(16, 5, 0),
-            Task::new(14, 4, 0),
-            Task::new(12, 8, 0),
-            Task::new(8, 6, 0),
-            Task::new(11, 3, 0),
-            Task::new(6, 10, 0),
-            Task::new(8, 3, 0),
-            Task::new(7, 7, 0),
-            Task::new(10, 10, 0),*/
+            /*,*/
         ];
 
         // Insert tasks into the AVL tree
@@ -377,8 +405,141 @@ mod tests {
 
         // Verify the structure and content of the AVL tree
         assert_eq!(avl_tree.height, 3);
-        //no balancing yet just update height
-        // 2
+
+        // Test search for existing rank
+        let search_result = avl_tree.search_by_rank(4);
+        assert!(search_result.is_some());
+        if let Some(node) = search_result {
+            match node.val {
+                Some(TaskorLink::STask(_task)) => {
+                    unreachable!();
+                }
+                Some(TaskorLink::Link(ll)) => {
+                    assert_eq!(ll.len(), 2);
+                }
+                None => {
+                    unreachable!();
+                }
+            }
+        }
+
+        let tasks2 = vec![
+            Task::new(15, 9, 0),
+            Task::new(16, 5, 0),
+            Task::new(14, 4, 0),
+            Task::new(12, 8, 0),
+            Task::new(8, 6, 0),
+            Task::new(11, 3, 0),
+            Task::new(6, 10, 0),
+            Task::new(8, 3, 0),
+            Task::new(7, 7, 0),
+            Task::new(10, 10, 0),
+        ];
+        for task in tasks2.iter() {
+            avl_tree.insert(task.clone());
+        }
+
+        assert_eq!(avl_tree.height, 5);
+        let search_result2 = avl_tree.search_by_rank(4);
+        assert!(search_result2.is_some());
+        if let Some(node) = search_result2 {
+            match node.val {
+                Some(TaskorLink::STask(_task)) => {
+                    unreachable!();
+                }
+                Some(TaskorLink::Link(ll)) => {
+                    assert_eq!(ll.len(), 3);
+                }
+                None => {
+                    unreachable!();
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_search_by_rank() {
+        // Create an AVL tree
+        let mut avl_tree = AvlTree::new(Task::new(0, 4, 0));
+
+        // Define a vector of tasks
+        let tasks = vec![
+            Task::new(1, 1, 0),
+            Task::new(2, 6, 0),
+            Task::new(3, 3, 0),
+            Task::new(4, 4, 0),
+            Task::new(8, 4, 0),
+            Task::new(5, 5, 0),
+        ];
+
+        // Insert tasks into the AVL tree
+        for task in tasks.iter() {
+            avl_tree.insert(task.clone());
+        }
+
+        // Test search for existing rank
+        let search_result = avl_tree.search_by_rank(3);
+        assert!(search_result.is_some());
+        if let Some(node) = search_result {
+            match node.val {
+                Some(TaskorLink::STask(task)) => {
+                    assert!(true);
+                    assert_eq!(task.rank, 3);
+                    assert_eq!(task.id, 3);
+                }
+                Some(TaskorLink::Link(_ll)) => {
+                    unreachable!();
+                }
+                None => {
+                    unreachable!();
+                }
+            }
+        } else {
+            unreachable!();
+        }
+
+        // Test search for existing rank
+        let search_result = avl_tree.search_by_rank(4);
+        assert!(search_result.is_some());
+        if let Some(node) = search_result {
+            match node.val {
+                Some(TaskorLink::STask(_task)) => {
+                    unreachable!();
+                }
+                Some(TaskorLink::Link(ll)) => {
+                    let head_rank = ll.get_head().unwrap().borrow().clone();
+                    assert_eq!(head_rank.rank, 4);
+                    assert_eq!(head_rank.id, 0);
+                    let val_2 = ll.search_by_task(tasks[4].clone());
+                    assert_eq!(
+                        val_2.as_ref().unwrap().borrow().node.borrow().rank.clone(),
+                        tasks[4].rank
+                    );
+                    assert_eq!(
+                        val_2.as_ref().unwrap().borrow().node.borrow().id.clone(),
+                        tasks[4].id
+                    );
+                    let val_3 = ll.search_by_task(tasks[3].clone());
+                    assert_eq!(
+                        val_3.as_ref().unwrap().borrow().node.borrow().rank.clone(),
+                        tasks[3].rank
+                    );
+                    assert_eq!(
+                        val_3.as_ref().unwrap().borrow().node.borrow().id.clone(),
+                        tasks[3].id
+                    );
+                }
+                None => {
+                    unreachable!();
+                }
+            }
+        } else {
+            unreachable!();
+        }
+
+        // Test search for non-existing rank
+        let search_result_non_existing = avl_tree.search_by_rank(8);
+        assert!(search_result_non_existing.is_none());
     }
 
     /*#[test]

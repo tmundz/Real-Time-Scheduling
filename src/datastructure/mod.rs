@@ -18,4 +18,8 @@ impl Task {
     fn new(id: i32, rank: i32, state: i32) -> Task {
         Task { id, rank, state }
     }
+
+    fn get_rank(&self) -> i32 {
+        self.rank
+    }
 }

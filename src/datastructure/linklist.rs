@@ -16,7 +16,7 @@ use std::rc::{Rc, Weak};
 // struct for the node in linklist
 #[derive(Debug, Clone)]
 pub struct Node {
-    node: Rc<RefCell<Task>>,
+    pub node: Rc<RefCell<Task>>,
     next: Option<Rc<RefCell<Node>>>,
     prev: Option<Weak<RefCell<Node>>>,
 }
@@ -81,7 +81,7 @@ impl LinkList {
         self.size == 0
     }
     //TODO Complete Traversal over doubly linked list forewards an backwards
-    pub fn search_by_node(&self, value: Rc<RefCell<Task>>) -> Option<Rc<RefCell<Node>>> {
+    pub fn search_by_task(&self, value: Task) -> Option<Rc<RefCell<Node>>> {
         if self.is_empty() {
             println!("empty list");
             return None;
@@ -90,7 +90,7 @@ impl LinkList {
         while let Some(node) = cur {
             let cur_node = node.borrow();
             let task = cur_node.node.borrow();
-            if value.borrow().id == task.id {
+            if value.id == task.id {
                 return Some(Rc::clone(&node));
             }
             //move to next node
@@ -153,7 +153,8 @@ mod tests {
         ll.push_back(tasks[2].clone());
         ll.push_back(tasks[3].clone());
         ll.push_back(tasks[4].clone());
-
+        assert_eq!(ll.get_head().unwrap().borrow().rank, 1);
+        assert_eq!(ll.get_head().unwrap().borrow().id, 1);
         // Check the size of the linked list
         assert_eq!(ll.size, 5);
     }
@@ -193,9 +194,7 @@ mod tests {
         let mut ll = LinkList::new();
 
         // Search for nodes in an empty linked list
-        assert!(ll
-            .search_by_node(Rc::new(RefCell::new(tasks[0].clone())))
-            .is_none());
+        assert!(ll.search_by_task(tasks[0].clone()).is_none());
 
         // Push tasks into the linked list
         ll.push_back(tasks[0].clone());
@@ -203,7 +202,7 @@ mod tests {
         ll.push_back(tasks[2].clone());
 
         // Search for nodes that exist in the linked list
-        let found_node = ll.search_by_node(Rc::new(RefCell::new(tasks[0].clone())));
+        let found_node = ll.search_by_task(tasks[0].clone());
         assert!(found_node.is_some());
         assert_eq!(found_node.unwrap().borrow().node.borrow().id, tasks[0].id);
 
@@ -212,9 +211,7 @@ mod tests {
         ll.push_back(tasks[4].clone());
 
         // Search for nodes that don't exist in the linked list
-        assert!(ll
-            .search_by_node(Rc::new(RefCell::new(Task::new(100, 100, 0))))
-            .is_none());
+        assert!(ll.search_by_task(Task::new(100, 100, 0)).is_none());
     }
 
     #[test]
