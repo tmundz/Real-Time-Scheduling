@@ -37,7 +37,7 @@ The concurrent AVL tree plays a central role in managing tasks within the schedu
 
 #### Current Issues
 
-I need help implementing the rotations, making it challenging to continue with the scheduling algorithm. Therefore, I decided to start with a basic BST implementation, which means it works much the same, except there will be no balance features. I will implement it later.
+I am struggling with the implementation of the rotations, making it challenging to continue with the scheduling algorithm. Therefore, I decided to start with a basic BST implementation, which means it works much the same, except there will be no balance features. I will implement these features later.
 
 ### Use
 
