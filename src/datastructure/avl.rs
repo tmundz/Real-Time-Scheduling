@@ -146,6 +146,13 @@ impl AvlTree {
         self.update_height();
     }
 
+    fn delete_by_rank(&mut self, target: &Task) {
+        //check if node is linkedlist/single task/empty
+        //search by rank first
+        //then delete by id
+        //check if ll is empty
+    }
+
     //update height function
     fn update_height(&mut self) {
         let left_height = self
@@ -263,6 +270,9 @@ impl AvlTree {
     }
     //balance
     //Delete
+    //No subtree case
+    //One Subtree case
+    //Two subtree case
     //traverse
     //update priority
     //concurrency

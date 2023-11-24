@@ -99,6 +99,85 @@ impl LinkList {
         None
     }
 
+    pub fn delete_task(&mut self, t_task: &Task) -> Option<Task> {
+        if self.is_empty() {
+            return None;
+        }
+        println!("id =  {:#?}", t_task);
+        if let Some(h_val) = self.get_head() {
+            if t_task.id == h_val.borrow().id {
+                return self.pop();
+            }
+        }
+
+        if let Some(t_val) = self.get_tail() {
+            if t_task.id == t_val.borrow().id {
+                return self.pop_back();
+            }
+        }
+        self.pop_mid(t_task)
+
+    }
+
+    fn pop_mid(&mut self, t_task: &Task) -> Option<Task> {
+        if let Some(t_node) = self.search_by_task(t_task.clone()) {
+            let p_node = t_node.borrow().prev.clone();
+            let n_node = t_node.borrow().next.clone();
+            let p_node_c = p_node.clone();
+            // Update the next and prev pointers of the neighboring nodes
+            if let Some(p) = p_node_c {
+                p.upgrade().unwrap().borrow_mut().next = n_node.clone();
+            }
+
+            if let Some(n) = n_node {
+                n.borrow_mut().prev = p_node;
+            }
+
+            // Optional: Clear the next and prev pointers of the deleted node
+            t_node.borrow_mut().next = None;
+            t_node.borrow_mut().prev = None;
+            self.size -= 1;
+            return Some(t_node.borrow().node.borrow().clone());
+        }
+
+        None
+    }
+
+    // pops the tail task
+
+    pub fn pop_back(&mut self) -> Option<Task> {
+        if let Some(prev_tail) = self.tail.take() {
+            if let Some(new_tail) = prev_tail.upgrade() {
+                // Update self.tail to the previous tail's prev
+                self.tail = new_tail.borrow().prev.clone();
+
+                println!("pop, new tail: {:?}", self.tail);
+                // If there's a new tail, update its next reference
+                if let Some(new_tail_ref) = &self.tail {
+                    if let Some(new_tail) = new_tail_ref.upgrade() {
+                        new_tail.borrow_mut().next = None;
+                    };
+                }
+
+                let task = prev_tail.upgrade().unwrap().borrow().node.borrow().clone();
+                self.size -= 1;
+                Some(task)
+            } else {
+                // If the previous tail cannot be upgraded to a strong reference, treat it as the last node in the list
+                self.head = None;
+                self.tail = None;
+
+                let task = prev_tail.upgrade().unwrap().borrow().node.borrow().clone();
+
+                self.size -= 1;
+                Some(task)
+            }
+        } else {
+            None
+        }
+    }
+
+    // pops the head task
     pub fn pop(&mut self) -> Option<Task> {
         self.head.take().map(|prev_head| {
             self.head = prev_head.borrow().next.clone();
@@ -114,6 +193,18 @@ impl LinkList {
 
     pub fn get_head(&self) -> Option<Rc<RefCell<Task>>> {
         Some(self.head.clone().unwrap().borrow().node.clone())
+    }
+    pub fn get_tail(&self) -> Option<Rc<RefCell<Task>>> {
+        Some(
+            self.tail
+                .clone()
+                .unwrap()
+                .upgrade()
+                .unwrap()
+                .borrow()
+                .node
+                .clone(),
+        )
     }
 
     pub fn display(&self, indent: &str) {
@@ -132,6 +223,43 @@ impl LinkList {
 /*
  * may be useful to have a push front push back
 */
+pub fn testing() {
+    // Create and add a bunch of tasks
+    let tasks = (1..=6).map(|i| Task::new(i, i, 0)).collect::<Vec<_>>();
+
+    // Initialize a linked list
+    let mut ll = LinkList::new();
+
+    // Push tasks into the linked list
+    ll.push_back(tasks[0].clone());
+    ll.push_back(tasks[1].clone());
+    ll.push_back(tasks[2].clone());
+    ll.push_back(tasks[3].clone());
+    ll.push_back(tasks[4].clone());
+
+    // Print initial state
+    println!("Delete Head:");
+    if let Some(deleted_task) = ll.delete_task(&tasks[0]) {
+        println!("Deleted Task: {:?}", deleted_task);
+    } else {
+        println!("Task not found or scheduler is empty.");
+    }
+
+    // Print initial state
+    println!("Delete tail:");
+    if let Some(deleted_task) = ll.delete_task(&tasks[4]) {
+        println!("Deleted Task: {:?}", deleted_task);
+    } else {
+        println!("Task not found or scheduler is empty.");
+    }
+
+    println!("Delete none existent:");
+    if let Some(deleted_task) = ll.delete_task(&tasks[5]) {
+        println!("Deleted Task: {:?}", deleted_task);
+    } else {
+        println!("Task not found or scheduler is empty.");
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -215,7 +343,7 @@ mod tests {
     }
 
     #[test]
-    fn pop_functions() {
+    fn delete_task_functions() {
         // Create and add a bunch of tasks
         let tasks = (1..=5).map(|i| Task::new(i, i, 0)).collect::<Vec<_>>();
 
@@ -230,14 +358,29 @@ mod tests {
         ll.push_back(tasks[4].clone());
         assert_eq!(ll.size, 5);
 
-        // Pop tasks and check the size
-        assert_eq!(ll.pop().unwrap().id, 1);
-        assert_eq!(ll.pop().unwrap().id, 2);
+        // Delete tasks and check the size
+        assert_eq!(ll.delete_task(&tasks[2]).unwrap().id, 3);
+        assert_eq!(ll.size, 4);
+
+        assert_eq!(ll.delete_task(&tasks[0]).unwrap().id, 1);
         assert_eq!(ll.size, 3);
-        assert_eq!(ll.pop().unwrap().id, 3);
-        assert_eq!(ll.pop().unwrap().id, 4);
+
+        // Delete head and check size
+        assert_eq!(ll.delete_task(&tasks[4]).unwrap().id, 5);
+        assert_eq!(ll.size, 2);
+
+        // Delete tail and check size
+        assert_eq!(ll.delete_task(&tasks[1]).unwrap().id, 2);
         assert_eq!(ll.size, 1);
-        assert_eq!(ll.pop().unwrap().id, 5);
+
+        // Attempt to delete non-existent task
+        assert!(ll.delete_task(&Task::new(99, 99, 0)).is_none());
+
+        // Delete last remaining task and check size
+        assert_eq!(ll.delete_task(&tasks[3]).unwrap().id, 4);
         assert_eq!(ll.size, 0);
+
+        // Attempt to delete from an empty list
+        assert!(ll.delete_task(&Task::new(42, 42, 0)).is_none());
     }
 }

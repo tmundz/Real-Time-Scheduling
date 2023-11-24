@@ -2,4 +2,6 @@ mod datastructure;
 use datastructure::avl;
 use datastructure::linklist;
 
-fn main() {}
+fn main() {
+    linklist::testing();
+}
