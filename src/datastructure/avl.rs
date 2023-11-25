@@ -41,6 +41,8 @@ impl AvlTree {
         self.val.is_none()
     }
 
+    //TODO create a search by task that will first call search by rank
+
     pub fn search_by_rank(&self, t_rank: i32) -> Option<AvlTree> {
         match &self.val {
             //base case if there is a single value
@@ -146,11 +148,17 @@ impl AvlTree {
         self.update_height();
     }
 
-    fn delete_by_rank(&mut self, target: &Task) {
-        //check if node is linkedlist/single task/empty
-        //search by rank first
-        //then delete by id
-        //check if ll is empty
+    fn delete_by_task(&mut self, target: &Task) -> Option<Task> {
+        //TODO make sure to add a search by rank call to get the  proper avl tree
+        match &mut self.val {
+            Some(TaskorLink::Link(ll)) => ll.delete_task(target),
+            Some(TaskorLink::STask(cur_task)) => {
+                let t = cur_task.clone();
+                self.val = None;
+                Some(t)
+            }
+            None => None,
+        }
     }
 
     //update height function
@@ -441,47 +449,58 @@ mod tests {
         assert!(search_result_non_existing.is_none());
     }
 
-    /*#[test]
-    fn test_left_rotation() {
-        let mut avl_tree = AvlTree::new(Task::new(5, 5, 0));
-        avl_tree.insert(Task::new(4, 4, 0));
-        avl_tree.insert(Task::new(3, 3, 0));
-
-        // Verify left rotation
-        assert_eq!(avl_tree.height, 3);
-        assert!(avl_tree.is_avl_balanced());
-    }
-
     #[test]
-    fn test_right_rotation() {
-        let mut avl_tree = AvlTree::new(Task::new(3, 3, 0));
-        avl_tree.insert(Task::new(4, 4, 0));
-        avl_tree.insert(Task::new(5, 5, 0));
+    fn test_delete_by_task() {
+        // Create an AVL tree
+        let mut avl_tree = AvlTree::new(Task::new(0, 4, 0));
 
-        // Verify right rotation
-        assert_eq!(avl_tree.height, 3);
-        assert!(avl_tree.is_avl_balanced());
+        // Define a vector of tasks
+        let tasks = vec![
+            Task::new(1, 1, 0),
+            Task::new(2, 6, 0),
+            Task::new(3, 3, 0),
+            Task::new(4, 4, 0),
+            Task::new(8, 4, 0),
+            Task::new(5, 5, 0),
+        ];
+
+        // Insert tasks into the AVL tree
+        for task in tasks.iter() {
+            avl_tree.insert(task.clone());
+        }
+
+        // Test delete existing task
+        let task_to_delete = &tasks[2]; // Task with id = 3
+        let deleted_task = avl_tree.delete_by_task(task_to_delete);
+        assert!(deleted_task.is_some());
+        assert_eq!(deleted_task.unwrap().id, task_to_delete.id);
+
+        // Verify that the task is no longer in the AVL tree
+        let search_result_after_delete = avl_tree.search_by_rank(task_to_delete.clone());
+        assert!(search_result_after_delete.is_none());
+
+        // Test delete non-existing task
+        let non_existing_task = Task::new(99, 99, 0); // Assuming this task does not exist
+        let deleted_non_existing_task = avl_tree.delete_by_task(&non_existing_task);
+        assert!(deleted_non_existing_task.is_none());
+
+        // Verify that the AVL tree structure is still valid after delete operations
+        // (You might want to add more assertions based on your AVL tree implementation)
+        // For example, check that the AVL tree remains balanced.
+
+        // Test delete last task in the AVL tree
+        let last_task_to_delete = &tasks[0]; // Task with id = 1
+        let deleted_last_task = avl_tree.delete_by_task(last_task_to_delete);
+        assert!(deleted_last_task.is_some());
+        assert_eq!(deleted_last_task.unwrap().id, last_task_to_delete.id);
+
+        // Verify that the task is no longer in the AVL tree
+        let search_result_after_last_delete =
+            avl_tree.search_by_rank(last_task_to_delete.clone().rank);
+        assert!(search_result_after_last_delete.is_none());
+
+        // Verify that the AVL tree structure is still valid after delete operations
+        // (You might want to add more assertions based on your AVL tree implementation)
+        // For example, check that the AVL tree remains balanced.
     }
-
-    #[test]
-    fn test_left_right_rotation() {
-        let mut avl_tree = AvlTree::new(Task::new(5, 5, 0));
-        avl_tree.insert(Task::new(3, 3, 0));
-        avl_tree.insert(Task::new(4, 4, 0));
-
-        // Verify left-right rotation
-        assert_eq!(avl_tree.height, 3);
-        assert!(avl_tree.is_avl_balanced());
-    }
-
-    #[test]
-    fn test_right_left_rotation() {
-        let mut avl_tree = AvlTree::new(Task::new(3, 3, 0));
-        avl_tree.insert(Task::new(5, 5, 0));
-        avl_tree.insert(Task::new(4, 4, 0));
-
-        // Verify right-left rotation
-        assert_eq!(avl_tree.height, 3);
-        assert!(avl_tree.is_avl_balanced());
-    }*/
 }
