@@ -16,7 +16,7 @@ use std::rc::{Rc, Weak};
 // struct for the node in linklist
 #[derive(Debug, Clone)]
 pub struct Node {
-    pub node: Rc<RefCell<Task>>,
+    node: Rc<RefCell<Task>>,
     next: Option<Rc<RefCell<Node>>>,
     prev: Option<Weak<RefCell<Node>>>,
 }
@@ -116,7 +116,6 @@ impl LinkList {
             }
         }
         self.pop_mid(t_task)
-
     }
 
     fn pop_mid(&mut self, t_task: &Task) -> Option<Task> {
