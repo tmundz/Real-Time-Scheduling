@@ -15,11 +15,18 @@ pub struct Task {
 }
 
 impl Task {
-    fn new(id: i32, rank: i32, state: i32) -> Task {
+    pub fn new(id: i32, rank: i32, state: i32) -> Task {
         Task { id, rank, state }
     }
 
-    fn get_rank(&self) -> i32 {
+    pub fn get_rank(&self) -> i32 {
         self.rank
+    }
+
+    pub fn get_id(&self) -> i32 {
+        self.id
+    }
+    pub fn get_state(&self) -> i32 {
+        self.state
     }
 }

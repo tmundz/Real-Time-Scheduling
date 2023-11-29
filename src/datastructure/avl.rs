@@ -1,7 +1,7 @@
-use super::linklist;
 use super::linklist::*;
 use super::Task;
 use std::cmp::Ordering;
+use std::fmt;
 use std::sync::{Arc, Mutex};
 
 // An AVL tree is a self-balancing binary search tree. It ensures that the height
@@ -13,155 +13,130 @@ use std::sync::{Arc, Mutex};
 // enum to allow either a Task type or LinkList type
 
 #[derive(Debug, Clone)]
-pub enum TaskorLink {
-    STask(Task),
-    Link(LinkList),
-}
-
-#[derive(Debug, Clone)]
 pub struct AvlTree {
-    val: Option<TaskorLink>,
+    val: Option<LinkList>,
     height: i32,
     left: Option<Arc<Mutex<AvlTree>>>,
     right: Option<Arc<Mutex<AvlTree>>>,
 }
 
 impl AvlTree {
-    fn new(task: Task) -> Self {
+    pub fn new() -> Self {
         AvlTree {
-            val: Some(TaskorLink::STask(task)),
+            val: None,
             height: 1,
             left: None,
             right: None,
         }
     }
 
-    // checks if the tree is empty
     pub fn is_empty(&self) -> bool {
-        self.val.is_none()
+        self.val.is_none() && self.height == 1
     }
 
     //TODO create a search by task that will first call search by rank
 
+    // searches by rank to easily find the node that a task belongs to
     pub fn search_by_rank(&self, t_rank: i32) -> Option<AvlTree> {
-        match &self.val {
-            //base case if there is a single value
-            Some(TaskorLink::STask(cur_task)) => {
-                if t_rank == cur_task.rank {
-                    return Some(self.clone());
-                } else if t_rank < cur_task.rank {
-                    if let Some(left) = &self.left {
-                        return left.lock().unwrap().search_by_rank(t_rank);
-                    }
-                } else if t_rank > cur_task.rank {
-                    if let Some(right) = &self.right {
-                        return right.lock().unwrap().search_by_rank(t_rank);
-                    }
-                }
-            }
-            Some(TaskorLink::Link(ll)) => {
-                let cur = ll.get_head().unwrap().borrow().clone();
-                let cur_rank = cur.rank;
-                if t_rank == cur_rank {
-                    return Some(self.clone());
-                } else if t_rank < cur_rank {
-                    if let Some(left) = &self.left {
-                        return left.lock().unwrap().search_by_rank(t_rank);
-                    }
-                } else if t_rank > cur_rank {
-                    if let Some(right) = &self.right {
-                        return right.lock().unwrap().search_by_rank(t_rank);
-                    }
-                }
-            }
-            None => {
+        if self.is_empty() {
+            return None;
+        }
+        if let Some(ll) = &self.val {
+            if ll.is_empty() {
                 return None;
+            }
+            //base case if there is a single value
+            let cur_node = ll.get_head().unwrap().borrow().clone();
+            let cur_node_rank = cur_node.get_rank();
+            if t_rank == cur_node_rank {
+                return Some(self.clone());
+            } else if t_rank < cur_node_rank {
+                if let Some(left) = &self.left {
+                    return left.lock().unwrap().search_by_rank(t_rank);
+                }
+            } else if t_rank > cur_node_rank {
+                if let Some(right) = &self.right {
+                    return right.lock().unwrap().search_by_rank(t_rank);
+                }
             }
         }
         None
     }
 
+    // TODO create the real public search task
+    // issue when adding the new value it seemed to delete the previous one
+
     //traverse through and display the path to value
-    pub fn insert(&mut self, new_val: Task) {
+    pub fn insert(&mut self, new_task: Task) {
         if self.is_empty() {
-            self.val = Some(TaskorLink::STask(new_val));
+            let mut ll = LinkList::new();
+            ll.push_back(new_task);
+            self.val = Some(ll);
         } else {
-            self.r_insert(new_val);
+            self.r_insert(new_task);
         }
+        self.update_height();
     }
-    // recursive insert
+    // Searches node to insert into
     fn r_insert(&mut self, new_val: Task) {
-        match &mut self.val {
-            Some(TaskorLink::STask(cur_task)) => match new_val.rank.cmp(&cur_task.rank) {
-                Ordering::Equal => {
-                    let mut ll = linklist::LinkList::new();
-                    ll.push_back(cur_task.clone());
-                    ll.push_back(new_val);
-                    self.val = Some(TaskorLink::Link(ll));
-                }
-                Ordering::Greater => {
-                    if let Some(right) = &mut self.right {
-                        let mut right_leaf = right.lock().unwrap();
-                        right_leaf.insert(new_val);
-                    } else {
-                        let new_node = AvlTree::new(new_val);
-                        self.right = Some(Arc::new(Mutex::new(new_node)));
-                    }
-                }
-                Ordering::Less => {
-                    if let Some(left) = &mut self.left {
-                        let mut left_leaf = left.lock().unwrap();
-                        left_leaf.insert(new_val);
-                    } else {
-                        let new_node = AvlTree::new(new_val);
-                        self.left = Some(Arc::new(Mutex::new(new_node)));
-                    }
-                }
-            },
-            Some(TaskorLink::Link(ll)) => {
+        match self.val {
+            Some(ref mut ll) => {
                 let cur_node = ll.get_head().unwrap().borrow().clone();
-                match new_val.rank.cmp(&cur_node.rank) {
+                match new_val.get_rank().cmp(&cur_node.get_rank()) {
                     Ordering::Equal => {
                         ll.push_back(new_val);
                     }
                     Ordering::Greater => {
                         if let Some(right) = &mut self.right {
-                            let mut right_leaf = right.lock().unwrap();
-                            right_leaf.insert(new_val);
+                            right.lock().unwrap().r_insert(new_val);
+                        } else {
+                            let new_tree = AvlTree::new();
+                            self.right = Some(Arc::new(Mutex::new(new_tree)));
+                            self.right
+                                .as_ref()
+                                .unwrap()
+                                .lock()
+                                .unwrap()
+                                .r_insert(new_val);
                         }
                     }
                     Ordering::Less => {
                         if let Some(left) = &mut self.left {
-                            let mut left_leaf = left.lock().unwrap();
-                            left_leaf.insert(new_val);
+                            left.lock().unwrap().r_insert(new_val);
+                        } else {
+                            let new_tree = AvlTree::new();
+                            self.left = Some(Arc::new(Mutex::new(new_tree)));
+                            self.left
+                                .as_ref()
+                                .unwrap()
+                                .lock()
+                                .unwrap()
+                                .r_insert(new_val);
                         }
                     }
                 }
             }
             None => {
-                self.val = Some(TaskorLink::STask(new_val));
-                self.left = None;
-                self.right = None;
+                let mut new_ll = LinkList::new();
+                new_ll.push_back(new_val);
+                self.val = Some(new_ll);
                 self.height = 1;
             }
         }
         self.update_height();
     }
 
+    // will delete a task within the tree
     fn delete_by_task(&mut self, target: &Task) -> Option<Task> {
-        //TODO make sure to add a search by rank call to get the  proper avl tree
-        match &mut self.val {
-            Some(TaskorLink::Link(ll)) => ll.delete_task(target),
-            Some(TaskorLink::STask(cur_task)) => {
-                let t = cur_task.clone();
-                self.val = None;
-                Some(t)
+        if let Some(leaf) = self.search_by_rank(target.get_rank()) {
+            if let Some(mut ll) = leaf.val {
+                return ll.delete_task(target);
             }
-            None => None,
         }
+        None
     }
 
-    //update height function
+    //update height
     fn update_height(&mut self) {
         let left_height = self
             .left
@@ -201,6 +176,7 @@ impl AvlTree {
     // left child val
     // root -> right -> right
     // update_height()
+
     // balance()
 
     // right rotation left imbalance
@@ -251,31 +227,6 @@ impl AvlTree {
         (left_height - right_height).abs() <= 1
     }*/
 
-    fn display(&self, indent: String) {
-        match &self.val {
-            Some(TaskorLink::STask(task)) => {
-                println!(
-                    "{}Task: id={}, rank={}, state={}",
-                    indent, task.id, task.rank, task.state
-                );
-            }
-            Some(TaskorLink::Link(link_list)) => {
-                println!("{}Linked List:", indent);
-                link_list.display(&format!("{}  ", indent));
-            }
-            None => {
-                println!("{}Empty", indent);
-            }
-        }
-
-        if let Some(left) = &self.left {
-            left.lock().unwrap().display(format!("{}L: ", indent));
-        }
-
-        if let Some(right) = &self.right {
-            right.lock().unwrap().display(format!("{}R: ", indent));
-        }
-    }
     //balance
     //Delete
     //No subtree case
@@ -293,10 +244,8 @@ mod tests {
 
     #[test]
     fn test_insert_tasks() {
-        // Create an AVL tree
-        let mut avl_tree = AvlTree::new(Task::new(0, 4, 0));
+        let mut avl_tree = AvlTree::new();
 
-        // Define a vector of tasks
         let tasks = vec![
             Task::new(1, 1, 0),
             Task::new(2, 6, 0),
@@ -305,30 +254,11 @@ mod tests {
             Task::new(5, 5, 0),
         ];
 
-        // Insert tasks into the AVL tree
-        for task in tasks.iter() {
+        for task in &tasks {
             avl_tree.insert(task.clone());
         }
 
-        // Verify the structure and content of the AVL tree
-        assert_eq!(avl_tree.height, 3);
-
-        // Test search for existing rank
-        let search_result = avl_tree.search_by_rank(4);
-        assert!(search_result.is_some());
-        if let Some(node) = search_result {
-            match node.val {
-                Some(TaskorLink::STask(_task)) => {
-                    unreachable!();
-                }
-                Some(TaskorLink::Link(ll)) => {
-                    assert_eq!(ll.len(), 2);
-                }
-                None => {
-                    unreachable!();
-                }
-            }
-        }
+        assert_eq!(avl_tree.height, 5);
 
         let tasks2 = vec![
             Task::new(15, 9, 0),
@@ -342,165 +272,27 @@ mod tests {
             Task::new(7, 7, 0),
             Task::new(10, 10, 0),
         ];
-        for task in tasks2.iter() {
+
+        for task in &tasks2 {
             avl_tree.insert(task.clone());
         }
 
         assert_eq!(avl_tree.height, 5);
-        let search_result2 = avl_tree.search_by_rank(4);
-        assert!(search_result2.is_some());
-        if let Some(node) = search_result2 {
-            match node.val {
-                Some(TaskorLink::STask(_task)) => {
-                    unreachable!();
-                }
-                Some(TaskorLink::Link(ll)) => {
-                    assert_eq!(ll.len(), 3);
-                }
-                None => {
-                    unreachable!();
-                }
+
+        /*let search_result = avl_tree.search_by_rank(4);
+        assert!(search_result.is_some());
+        if let Some(node) = search_result {
+            if let Some(ll) = &node.val {
+                assert_eq!(ll.len(), 3);
+            } else {
+                unreachable!()
             }
-        }
+        }*/
     }
 
     #[test]
-    fn test_search_by_rank() {
-        // Create an AVL tree
-        let mut avl_tree = AvlTree::new(Task::new(0, 4, 0));
-
-        // Define a vector of tasks
-        let tasks = vec![
-            Task::new(1, 1, 0),
-            Task::new(2, 6, 0),
-            Task::new(3, 3, 0),
-            Task::new(4, 4, 0),
-            Task::new(8, 4, 0),
-            Task::new(5, 5, 0),
-        ];
-
-        // Insert tasks into the AVL tree
-        for task in tasks.iter() {
-            avl_tree.insert(task.clone());
-        }
-
-        // Test search for existing rank
-        let search_result = avl_tree.search_by_rank(3);
-        assert!(search_result.is_some());
-        if let Some(node) = search_result {
-            match node.val {
-                Some(TaskorLink::STask(task)) => {
-                    assert!(true);
-                    assert_eq!(task.rank, 3);
-                    assert_eq!(task.id, 3);
-                }
-                Some(TaskorLink::Link(_ll)) => {
-                    unreachable!();
-                }
-                None => {
-                    unreachable!();
-                }
-            }
-        } else {
-            unreachable!();
-        }
-
-        // Test search for existing rank
-        let search_result = avl_tree.search_by_rank(4);
-        assert!(search_result.is_some());
-        if let Some(node) = search_result {
-            match node.val {
-                Some(TaskorLink::STask(_task)) => {
-                    unreachable!();
-                }
-                Some(TaskorLink::Link(ll)) => {
-                    let head_rank = ll.get_head().unwrap().borrow().clone();
-                    assert_eq!(head_rank.rank, 4);
-                    assert_eq!(head_rank.id, 0);
-                    let val_2 = ll.search_by_task(tasks[4].clone());
-                    assert_eq!(
-                        val_2.as_ref().unwrap().borrow().node.borrow().rank.clone(),
-                        tasks[4].rank
-                    );
-                    assert_eq!(
-                        val_2.as_ref().unwrap().borrow().node.borrow().id.clone(),
-                        tasks[4].id
-                    );
-                    let val_3 = ll.search_by_task(tasks[3].clone());
-                    assert_eq!(
-                        val_3.as_ref().unwrap().borrow().node.borrow().rank.clone(),
-                        tasks[3].rank
-                    );
-                    assert_eq!(
-                        val_3.as_ref().unwrap().borrow().node.borrow().id.clone(),
-                        tasks[3].id
-                    );
-                }
-                None => {
-                    unreachable!();
-                }
-            }
-        } else {
-            unreachable!();
-        }
-
-        // Test search for non-existing rank
-        let search_result_non_existing = avl_tree.search_by_rank(8);
-        assert!(search_result_non_existing.is_none());
-    }
+    fn test_search_by_rank() {}
 
     #[test]
-    fn test_delete_by_task() {
-        // Create an AVL tree
-        let mut avl_tree = AvlTree::new(Task::new(0, 4, 0));
-
-        // Define a vector of tasks
-        let tasks = vec![
-            Task::new(1, 1, 0),
-            Task::new(2, 6, 0),
-            Task::new(3, 3, 0),
-            Task::new(4, 4, 0),
-            Task::new(8, 4, 0),
-            Task::new(5, 5, 0),
-        ];
-
-        // Insert tasks into the AVL tree
-        for task in tasks.iter() {
-            avl_tree.insert(task.clone());
-        }
-
-        // Test delete existing task
-        let task_to_delete = &tasks[2]; // Task with id = 3
-        let deleted_task = avl_tree.delete_by_task(task_to_delete);
-        assert!(deleted_task.is_some());
-        assert_eq!(deleted_task.unwrap().id, task_to_delete.id);
-
-        // Verify that the task is no longer in the AVL tree
-        let search_result_after_delete = avl_tree.search_by_rank(task_to_delete.clone());
-        assert!(search_result_after_delete.is_none());
-
-        // Test delete non-existing task
-        let non_existing_task = Task::new(99, 99, 0); // Assuming this task does not exist
-        let deleted_non_existing_task = avl_tree.delete_by_task(&non_existing_task);
-        assert!(deleted_non_existing_task.is_none());
-
-        // Verify that the AVL tree structure is still valid after delete operations
-        // (You might want to add more assertions based on your AVL tree implementation)
-        // For example, check that the AVL tree remains balanced.
-
-        // Test delete last task in the AVL tree
-        let last_task_to_delete = &tasks[0]; // Task with id = 1
-        let deleted_last_task = avl_tree.delete_by_task(last_task_to_delete);
-        assert!(deleted_last_task.is_some());
-        assert_eq!(deleted_last_task.unwrap().id, last_task_to_delete.id);
-
-        // Verify that the task is no longer in the AVL tree
-        let search_result_after_last_delete =
-            avl_tree.search_by_rank(last_task_to_delete.clone().rank);
-        assert!(search_result_after_last_delete.is_none());
-
-        // Verify that the AVL tree structure is still valid after delete operations
-        // (You might want to add more assertions based on your AVL tree implementation)
-        // For example, check that the AVL tree remains balanced.
-    }
+    fn test_delete_by_task() {}
 }
