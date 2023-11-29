@@ -47,11 +47,12 @@ impl LinkList {
         }
     }
 
+    //Inserts a task at the back of the doubly linked list
+    //Takes a single task as a param
     pub fn push_back(&mut self, task: Task) {
         let new_node = Node::new(task);
         match self.tail.take() {
             //Changes value of tail with none while taking ownership
-            //matches to a tail if one exists
             Some(prev_tail) => {
                 let new_tail = Rc::downgrade(&new_node); // creates a weak reference
                                                          //upgrade the weak reference then borrow_mut so that the next feild can be updated
@@ -74,13 +75,41 @@ impl LinkList {
             }
         }
     }
+
     pub fn len(&self) -> i32 {
         self.size
     }
+
     pub fn is_empty(&self) -> bool {
         self.size == 0
     }
+
+    pub fn get_head(&self) -> Option<Rc<RefCell<Task>>> {
+        Some(self.head.clone().unwrap().borrow().node.clone())
+    }
+
+    pub fn get_head_rank(&self) -> i32 {
+        self.head
+            .as_ref()
+            .map_or(-1, |node| node.borrow().node.borrow().rank)
+    }
+
+    pub fn get_tail(&self) -> Option<Rc<RefCell<Task>>> {
+        Some(
+            self.tail
+                .clone()
+                .unwrap()
+                .upgrade()
+                .unwrap()
+                .borrow()
+                .node
+                .clone(),
+        )
+    }
+
     //TODO Complete Traversal over doubly linked list forewards an backwards
+
+    // Given a task check if the tasks exists and if so return the Node it belongs to
     pub fn search_by_task(&self, value: Task) -> Option<Rc<RefCell<Node>>> {
         if self.is_empty() {
             println!("empty list");
@@ -99,11 +128,16 @@ impl LinkList {
         None
     }
 
+    // Deletes a task if it exists
     pub fn delete_task(&mut self, t_task: &Task) -> Option<Task> {
+        /*
+         * Checks if the tasks are head or tail first
+         * then if not means the task is in the middle
+         * */
         if self.is_empty() {
             return None;
         }
-        println!("id =  {:#?}", t_task);
+
         if let Some(h_val) = self.get_head() {
             if t_task.id == h_val.borrow().id {
                 return self.pop();
@@ -118,6 +152,7 @@ impl LinkList {
         self.pop_mid(t_task)
     }
 
+    // deletes a task within the middle of the linked list
     fn pop_mid(&mut self, t_task: &Task) -> Option<Task> {
         if let Some(t_node) = self.search_by_task(t_task.clone()) {
             let p_node = t_node.borrow().prev.clone();
@@ -143,8 +178,7 @@ impl LinkList {
     }
 
     // pops the tail task
-
-    pub fn pop_back(&mut self) -> Option<Task> {
+    fn pop_back(&mut self) -> Option<Task> {
         if let Some(prev_tail) = self.tail.take() {
             if let Some(new_tail) = prev_tail.upgrade() {
                 // Update self.tail to the previous tail's prev
@@ -177,86 +211,18 @@ impl LinkList {
     }
 
     // pops the head task
-    pub fn pop(&mut self) -> Option<Task> {
+    fn pop(&mut self) -> Option<Task> {
         self.head.take().map(|prev_head| {
             self.head = prev_head.borrow().next.clone();
             if let Some(ref new_head) = self.head {
                 new_head.borrow_mut().prev = None;
             }
+
             let task = prev_head.borrow().node.borrow().clone();
 
             self.size -= 1;
             task
         })
-    }
-
-    pub fn get_head(&self) -> Option<Rc<RefCell<Task>>> {
-        Some(self.head.clone().unwrap().borrow().node.clone())
-    }
-    pub fn get_tail(&self) -> Option<Rc<RefCell<Task>>> {
-        Some(
-            self.tail
-                .clone()
-                .unwrap()
-                .upgrade()
-                .unwrap()
-                .borrow()
-                .node
-                .clone(),
-        )
-    }
-
-    pub fn display(&self, indent: &str) {
-        let mut cur = self.head.clone();
-        while let Some(node) = cur {
-            let cur_node = node.borrow();
-            let task = cur_node.node.borrow();
-            println!(
-                "{}Task: id={}, rank={}, state={}, size={}",
-                indent, task.id, task.rank, task.state, self.size
-            );
-            cur = cur_node.next.clone();
-        }
-    }
-}
-/*
- * may be useful to have a push front push back
-*/
-pub fn testing() {
-    // Create and add a bunch of tasks
-    let tasks = (1..=6).map(|i| Task::new(i, i, 0)).collect::<Vec<_>>();
-
-    // Initialize a linked list
-    let mut ll = LinkList::new();
-
-    // Push tasks into the linked list
-    ll.push_back(tasks[0].clone());
-    ll.push_back(tasks[1].clone());
-    ll.push_back(tasks[2].clone());
-    ll.push_back(tasks[3].clone());
-    ll.push_back(tasks[4].clone());
-
-    // Print initial state
-    println!("Delete Head:");
-    if let Some(deleted_task) = ll.delete_task(&tasks[0]) {
-        println!("Deleted Task: {:?}", deleted_task);
-    } else {
-        println!("Task not found or scheduler is empty.");
-    }
-
-    // Print initial state
-    println!("Delete tail:");
-    if let Some(deleted_task) = ll.delete_task(&tasks[4]) {
-        println!("Deleted Task: {:?}", deleted_task);
-    } else {
-        println!("Task not found or scheduler is empty.");
-    }
-
-    println!("Delete none existent:");
-    if let Some(deleted_task) = ll.delete_task(&tasks[5]) {
-        println!("Deleted Task: {:?}", deleted_task);
-    } else {
-        println!("Task not found or scheduler is empty.");
     }
 }
 

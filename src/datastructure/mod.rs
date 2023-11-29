@@ -26,7 +26,7 @@ impl Task {
     pub fn get_id(&self) -> i32 {
         self.id
     }
-    pub fn get_state(&self) -> 132 {
+    pub fn get_state(&self) -> i32 {
         self.state
     }
 }
