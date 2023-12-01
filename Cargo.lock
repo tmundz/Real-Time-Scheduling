@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "preemtive-priority-scheduling"
+name = "mlfq_scheduling"
 version = "0.1.0"

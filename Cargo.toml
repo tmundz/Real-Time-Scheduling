@@ -1,5 +1,5 @@
 [package]
-name = "preemtive-priority-scheduling"
+name = "mlfq_scheduling"
 version = "0.1.0"
 edition = "2021"
 
