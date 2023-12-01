@@ -1,7 +1,7 @@
 use super::linklist::*;
 use super::Task;
 use std::cmp::Ordering;
-use std::fmt;
+use std::ptr::write;
 use std::sync::{Arc, Mutex};
 
 // An AVL tree is a self-balancing binary search tree. It ensures that the height
@@ -34,11 +34,9 @@ impl AvlTree {
         self.val.is_none() && self.height == 1
     }
 
-    //TODO create a search by task that will first call search by rank
-    pub fn search_by_task(&self, target: Task) {}
     // searches by rank to easily find the node that a task belongs to
     // this function will return the root node that holds the rank
-    pub fn search_by_rank(&self, t_rank: i32) -> Option<AvlTree> {
+    pub fn search_by_task(&self, target: &Task) -> Option<AvlTree> {
         if self.is_empty() {
             return None;
         }
@@ -49,15 +47,15 @@ impl AvlTree {
             //base case if there is a single value
             let cur_node = ll.get_head().unwrap().borrow().clone();
             let cur_node_rank = cur_node.get_rank();
-            if t_rank == cur_node_rank {
+            if target.get_rank() == cur_node_rank {
                 return Some(self.clone());
-            } else if t_rank < cur_node_rank {
+            } else if target.get_rank() < cur_node_rank {
                 if let Some(left) = &self.left {
-                    return left.lock().unwrap().search_by_rank(t_rank);
+                    return left.lock().unwrap().search_by_task(target);
                 }
-            } else if t_rank > cur_node_rank {
+            } else if target.get_rank() > cur_node_rank {
                 if let Some(right) = &self.right {
-                    return right.lock().unwrap().search_by_rank(t_rank);
+                    return right.lock().unwrap().search_by_task(target);
                 }
             }
         }
@@ -130,9 +128,11 @@ impl AvlTree {
     // will delete a task within the tree
     fn delete_by_task(&mut self, target: &Task) -> Option<Task> {
         // search task
-        if let Some(leaf) = self.search_by_rank(target.get_rank()) {
+        if let Some(leaf) = self.search_by_task(target) {
             if let Some(mut ll) = leaf.val {
-                return ll.delete_task(target);
+                let retrieved = ll.delete_task(target);
+                self.val = Some(ll);
+                return retrieved;
             }
         }
         None
@@ -289,7 +289,7 @@ mod tests {
             Some(ref ll) => assert_eq!(ll.len(), 4),
             None => unreachable!(),
         }
-        let search_result = avl_tree.search_by_rank(tasks[2].get_rank());
+        let search_result = avl_tree.search_by_task(&tasks[2]);
         assert!(search_result.is_some());
         if let Some(node) = search_result {
             if let Some(ll) = &node.val {
@@ -301,7 +301,7 @@ mod tests {
     }
 
     #[test]
-    fn test_search_by_rank() {
+    fn test_search_by_task() {
         let mut avl_tree = AvlTree::new();
 
         let tasks = vec![
@@ -315,12 +315,24 @@ mod tests {
         for task in &tasks {
             avl_tree.insert(task.clone());
         }
-
-        assert_eq!(avl_tree.height, 3);
-        match avl_tree.val {
-            Some(ref ll) => assert_eq!(ll.len(), 2),
-            None => unreachable!(),
+        // Test search for existing task
+        let search_result = avl_tree.search_by_task(&tasks[2]);
+        assert!(search_result.is_some());
+        if let Some(node) = search_result {
+            match node.val {
+                Some(ll) => {
+                    // Check the rank of the retrieved task
+                    let retrieved_task = ll.get_head().unwrap();
+                    assert_eq!(retrieved_task.borrow().get_rank(), tasks[2].get_rank());
+                }
+                None => unreachable!(),
+            }
         }
+
+        // Test search for non-existing task
+        let non_existing_task = Task::new(10, 10, 0);
+        let non_existing_search_result = avl_tree.search_by_task(&non_existing_task);
+        assert!(non_existing_search_result.is_none());
 
         let tasks2 = vec![
             Task::new(15, 9, 0),
@@ -339,8 +351,55 @@ mod tests {
         for task in &tasks2 {
             avl_tree.insert(task.clone());
         }
+
+        let new_existing_task = Task::new(10, 10, 0);
+        let new_existing_search_result = avl_tree.search_by_task(&new_existing_task);
+        assert!(new_existing_search_result.is_some());
     }
 
     #[test]
-    fn test_delete_by_task() {}
+    fn test_delete_by_task() {
+        // Test deleting from a non-empty tree
+        let mut avl_tree = AvlTree::new();
+
+        let tasks = vec![
+            Task::new(1, 5, 0),
+            Task::new(2, 6, 0),
+            Task::new(3, 3, 0),
+            Task::new(4, 4, 0),
+            Task::new(5, 5, 0),
+        ];
+
+        for task in &tasks {
+            avl_tree.insert(task.clone());
+        }
+
+        // Delete a task that exists
+        avl_tree.delete_by_task(&tasks[0]);
+        assert_eq!(avl_tree.height, 3);
+        match avl_tree.val {
+            Some(ref ll) => {
+                assert_eq!(ll.len(), 1);
+                assert_eq!(ll.get_head().unwrap().borrow().get_id(), tasks[4].get_id());
+            }
+            None => unreachable!(),
+        }
+
+        // Delete a task that doesn't exist
+        let non_existent_task = Task::new(100, 6, 0);
+        avl_tree.delete_by_task(&non_existent_task);
+        assert_eq!(avl_tree.height, 3); // Height should remain the same
+        match avl_tree.val {
+            Some(ref ll) => {
+                assert_eq!(ll.len(), 1); // List size should remain the same
+            }
+            None => unreachable!(),
+        }
+
+        // Test deleting from an empty tree
+        let mut empty_tree = AvlTree::new();
+        empty_tree.delete_by_task(&tasks[0]); // Delete from an empty tree
+        assert_eq!(empty_tree.height, 1); // Height should remain 0
+        assert!(empty_tree.is_empty()); // Tree should remain empty
+    }
 }

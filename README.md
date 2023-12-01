@@ -26,11 +26,12 @@ The concurrent AVL tree plays a central role in managing tasks within the schedu
 - [x] Is Empty
 - [x] Insert
 - [ ] Balance
-- [ ] Delete
+- [x] Delete Task
+- [ ] Delete Node
 - [ ] Get Highest Priority
 - [ ] Update Priority
-- [ ] Find Task
-- [ ] Traverse
+- [x] Find Task
+- [x] Traverse
 - [ ] Testing
 
 **Note:** To address concurrency challenges such as race conditions and deadlocks, safeguards and proper synchronization mechanisms will be incorporated into the AVL tree's design and implementation.
