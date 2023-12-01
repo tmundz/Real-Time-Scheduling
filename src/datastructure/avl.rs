@@ -35,8 +35,9 @@ impl AvlTree {
     }
 
     //TODO create a search by task that will first call search by rank
-
+    pub fn search_by_task(&self, target: Task) {}
     // searches by rank to easily find the node that a task belongs to
+    // this function will return the root node that holds the rank
     pub fn search_by_rank(&self, t_rank: i32) -> Option<AvlTree> {
         if self.is_empty() {
             return None;
@@ -128,6 +129,7 @@ impl AvlTree {
 
     // will delete a task within the tree
     fn delete_by_task(&mut self, target: &Task) -> Option<Task> {
+        // search task
         if let Some(leaf) = self.search_by_rank(target.get_rank()) {
             if let Some(mut ll) = leaf.val {
                 return ll.delete_task(target);
@@ -247,7 +249,7 @@ mod tests {
         let mut avl_tree = AvlTree::new();
 
         let tasks = vec![
-            Task::new(1, 1, 0),
+            Task::new(1, 5, 0),
             Task::new(2, 6, 0),
             Task::new(3, 3, 0),
             Task::new(4, 4, 0),
@@ -258,7 +260,11 @@ mod tests {
             avl_tree.insert(task.clone());
         }
 
-        assert_eq!(avl_tree.height, 5);
+        assert_eq!(avl_tree.height, 3);
+        match avl_tree.val {
+            Some(ref ll) => assert_eq!(ll.len(), 2),
+            None => unreachable!(),
+        }
 
         let tasks2 = vec![
             Task::new(15, 9, 0),
@@ -271,6 +277,7 @@ mod tests {
             Task::new(8, 3, 0),
             Task::new(7, 7, 0),
             Task::new(10, 10, 0),
+            Task::new(10, 5, 0),
         ];
 
         for task in &tasks2 {
@@ -278,8 +285,11 @@ mod tests {
         }
 
         assert_eq!(avl_tree.height, 5);
-
-        /*let search_result = avl_tree.search_by_rank(4);
+        match avl_tree.val {
+            Some(ref ll) => assert_eq!(ll.len(), 4),
+            None => unreachable!(),
+        }
+        let search_result = avl_tree.search_by_rank(tasks[2].get_rank());
         assert!(search_result.is_some());
         if let Some(node) = search_result {
             if let Some(ll) = &node.val {
@@ -287,11 +297,49 @@ mod tests {
             } else {
                 unreachable!()
             }
-        }*/
+        }
     }
 
     #[test]
-    fn test_search_by_rank() {}
+    fn test_search_by_rank() {
+        let mut avl_tree = AvlTree::new();
+
+        let tasks = vec![
+            Task::new(1, 5, 0),
+            Task::new(2, 6, 0),
+            Task::new(3, 3, 0),
+            Task::new(4, 4, 0),
+            Task::new(5, 5, 0),
+        ];
+
+        for task in &tasks {
+            avl_tree.insert(task.clone());
+        }
+
+        assert_eq!(avl_tree.height, 3);
+        match avl_tree.val {
+            Some(ref ll) => assert_eq!(ll.len(), 2),
+            None => unreachable!(),
+        }
+
+        let tasks2 = vec![
+            Task::new(15, 9, 0),
+            Task::new(16, 5, 0),
+            Task::new(14, 4, 0),
+            Task::new(12, 8, 0),
+            Task::new(8, 6, 0),
+            Task::new(11, 3, 0),
+            Task::new(6, 10, 0),
+            Task::new(8, 3, 0),
+            Task::new(7, 7, 0),
+            Task::new(10, 10, 0),
+            Task::new(10, 5, 0),
+        ];
+
+        for task in &tasks2 {
+            avl_tree.insert(task.clone());
+        }
+    }
 
     #[test]
     fn test_delete_by_task() {}
